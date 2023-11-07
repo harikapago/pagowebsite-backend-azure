@@ -80,6 +80,49 @@ app.post('/post-job', upload.single('image'), async (req, res) => {
   }
 });
 
+
+// Create a PUT route to update a job by its ID
+app.put('/update-job/:id', async (req, res) => {
+  const jobId = req.params.id;
+  const {
+    date,
+    title,
+    status,
+    Qualifications,
+    Skills,
+    positontype,
+    Location,
+    iconPath,
+  } = req.body;
+
+  try {
+    const updatedJob = await JobsDisplay.findByIdAndUpdate(
+      jobId,
+      {
+        date,
+        title,
+        status,
+        Qualifications,
+        Skills,
+        positontype,
+        Location,
+        iconPath,
+      },
+      { new: true }
+    );
+
+    if (!updatedJob) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    res.json({ message: 'Job updated successfully', updatedJob });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 // Create a GET route to fetch all grievances
 app.get('/get-jobs', async (req, res) => {
   try {
