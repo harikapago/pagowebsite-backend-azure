@@ -52,7 +52,7 @@ const jobsDisplaySchema = new mongoose.Schema({
     iconPath:String
 });
 
-const Grievance = mongoose.model('JobsDisplay', jobsDisplaySchema);
+const JobsDisplay = mongoose.model('JobsDisplay', jobsDisplaySchema);
 
 // Create an API endpoint for posting grievances
 app.post('/post-job', upload.single('image'), async (req, res) => {
