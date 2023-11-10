@@ -24,7 +24,7 @@ mongoose.connect("mongodb://pagoanalytics-server:mTBD1NdeNJiQcCQznYyl5uGZxGcYF4D
 
 
 
-// ----------------------------------------JOBS Display api-----------------------
+// ----------------------------------------JOBS posting Display api-----------------------
 const { BlobServiceClient } = require("@azure/storage-blob");
 
 const azureStorageConnectionString = "DefaultEndpointsProtocol=https;AccountName=surveyappanswers;AccountKey=/z7TbEOSeMD/CNN/KrNzhpxbqhaiV620aRfLBLRi9nhhiE4AyN9gAG/MywUOzXWpfOqwNctMSFBF+AStE1wa2g==;EndpointSuffix=core.windows.net";
@@ -180,6 +180,63 @@ app.delete('/delete-job/:id', async (req, res) => {
     }
 
     res.json({ message: 'Job deleted successfully', deletedjob });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+// ----------------------------------- applying jobs------------------------------------
+const containerName2 = "resumes";
+const containerClient2 = blobServiceClient.getContainerClient(containerName2);
+
+// Define a Mongoose schema for the Job Application collection
+const jobApplicationSchema = new mongoose.Schema({
+  name: String,
+  jobTitle: String,
+  phone: String,
+  email: String,
+  city: String,
+  resumePath: String, // Store the path to the uploaded resume
+  coverLetter: String,
+});
+
+const JobApplication = mongoose.model('JobApplication', jobApplicationSchema);
+
+// Create an API endpoint for posting job applications
+app.post('/post-application', upload.single('resume'), async (req, res) => {
+  try {
+    const { name, jobTitle, phone, email, city, coverLetter } = req.body;
+    const resumeData = req.file.buffer;
+    const contentType = req.file.mimetype;
+
+    // Use a unique name for the resume file
+    const resumeFileName = `${Date.now()}_${req.file.originalname}`;
+    const blockBlobClient = containerClient2.getBlockBlobClient(resumeFileName);
+
+    // Upload the resume to Azure Storage
+    await blockBlobClient.uploadData(resumeData, {
+      blobHTTPHeaders: { blobContentType: contentType },
+    });
+
+    // Create a path to the uploaded resume
+    const resumePath = `${containerClient2.url}/${resumeFileName}`;
+
+    // Save the job application details in MongoDB
+    const jobApplication = new JobApplication({
+      name,
+      jobTitle,
+      phone,
+      email,
+      city,
+      resumePath,
+      coverLetter,
+    });
+
+    await jobApplication.save();
+
+    res.status(201).json({ message: 'Job application submitted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
