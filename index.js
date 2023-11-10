@@ -244,6 +244,49 @@ app.post('/post-application', upload.single('resume'), async (req, res) => {
 });
 
 
+// Create a GET route to fetch all 
+app.get('/get-all-applications', async (req, res) => {
+  try {
+    const applications = await JobApplication.find();
+    res.json(applications);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a DELETE route to delete all 
+app.delete('/delete-all-applications', async (req, res) => {
+  try {
+    const result = await JobApplication.deleteMany({});
+    res.json({ message: 'All applications deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a DELETE route to delete a  by its ID
+app.delete('/delete-application/:id', async (req, res) => {
+  const applicationId = req.params.id;
+
+  try {
+    const deletedapplication = await JobApplication.findByIdAndDelete(applicationId);
+
+    if (!deletedapplication) {
+      return res.status(404).json({ error: 'application not found' });
+    }
+
+    res.json({ message: 'application deleted successfully', deletedapplication });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+
 app.get('/', (req, res) => {
   res.send('Hello, Pago website');
 });
